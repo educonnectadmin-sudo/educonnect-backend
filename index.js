@@ -1,69 +1,76 @@
-const msg = {
-  to: to,
-  from: process.env.EMAIL_USER,
-  subject: "Leave Application Status",
+const express = require("express");
+const cors = require("cors");
+const sgMail = require("@sendgrid/mail");
 
-  html: `
-  <div style="
-    font-family: Arial, sans-serif;
-    background-color: #ffffff;
-    padding: 40px;
-    text-align: center;
-  ">
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-    <div style="
-      max-width: 600px;
-      margin: auto;
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 30px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    ">
+// ✅ SAFE CHECK (prevents crash)
+const API_KEY = process.env.SENDGRID_API_KEY;
+const EMAIL = process.env.EMAIL_USER;
 
-      <!-- BACKGROUND LOGO (VISIBLE NOW) -->
-      <div style="
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        opacity: 0.12; /* 🔥 THIS IS THE FIX */
-      ">
-        <img src="https://res.cloudinary.com/dcurr0wjz/image/upload/v1774714989/Gemini_Generated_Image_oig6yzoig6yzoig6_h73pna.png" width="350"/>
+if (!API_KEY || !EMAIL) {
+  console.error("❌ Missing ENV variables");
+} else {
+  sgMail.setApiKey(API_KEY);
+}
+
+// ✅ Test route
+app.get("/", (req, res) => {
+  res.send("EduConnect Backend is Running ✅");
+});
+
+// ✅ Send Email API
+app.post("/send-email", async (req, res) => {
+  try {
+    const { to, name, status, fromDate, toDate } = req.body;
+
+    if (!to) {
+      return res.status(400).send("Recipient email is required");
+    }
+
+    if (!API_KEY || !EMAIL) {
+      return res.status(500).send("Server config error ❌");
+    }
+
+    const msg = {
+      to: to,
+      from: EMAIL,
+      subject: "Leave Application Status",
+
+      html: `
+      <div style="font-family: Arial; padding:40px;">
+        <div style="position:relative; max-width:600px; margin:auto; padding:30px;">
+
+          <!-- LOGO -->
+          <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); opacity:0.12;">
+            <img src="https://res.cloudinary.com/dcurr0wjz/image/upload/v1774714989/Gemini_Generated_Image_oig6yzoig6yzoig6_h73pna.png" width="350"/>
+          </div>
+
+          <div style="position:relative; z-index:2;">
+            <h2>Hi ${name},</h2>
+            <p>Status: <b>${status}</b></p>
+            <p>${fromDate} → ${toDate}</p>
+          </div>
+
+        </div>
       </div>
+      `
+    };
 
-      <!-- CONTENT -->
-      <div style="position: relative; z-index: 2; text-align: left;">
+    await sgMail.send(msg);
 
-        <h2 style="color:#6a0dad;">Hi ${name},</h2>
+    res.send("Email sent successfully ✅");
 
-        <p>The HOD has formally reviewed your leave application.</p>
+  } catch (error) {
+    console.error("❌ ERROR:", error.response?.body || error.message);
+    res.status(500).send("Email failed ❌");
+  }
+});
 
-        <p style="margin-top:20px;">
-          <b>Status:</b> 
-          <span style="color:${status === "APPROVED" ? "green" : "red"};">
-            ${status}
-          </span>
-        </p>
+const PORT = process.env.PORT || 3000;
 
-        <p>
-          <b>Duration:</b> ${fromDate} → ${toDate}
-        </p>
-
-        <hr style="margin:20px 0;" />
-
-        <p style="font-style: italic; color: #555;">
-          "Your leave application has been ${status.toLowerCase()} by the HOD."
-        </p>
-
-        <p style="margin-top:30px;">
-          Regards,<br/>
-          <b>EduConnect Team</b>
-        </p>
-
-      </div>
-    </div>
-  </div>
-  `
-};
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
+});
