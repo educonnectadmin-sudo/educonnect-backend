@@ -6,25 +6,25 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ Use environment variables (secure way)
-const EMAIL_USER = process.env.EMAIL_USER;
-const EMAIL_PASS = process.env.EMAIL_PASS;
-
-// Gmail transporter
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "educonnect.admin@gmail.com",
-    pass: "eqzwgixdnlkphgar"
-  }
-});
-
-// Test route (optional but useful)
+// ✅ Test route
 app.get("/", (req, res) => {
   res.send("EduConnect Backend is Running ✅");
 });
 
-// API to send email
+// ✅ Environment variables (DO NOT hardcode email/password)
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+
+// ✅ Gmail transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: EMAIL_USER,
+    pass: EMAIL_PASS
+  }
+});
+
+// ✅ API to send email
 app.post("/send-email", async (req, res) => {
   const { to, name, status, fromDate, toDate } = req.body;
 
@@ -51,7 +51,7 @@ Thank you.`
   }
 });
 
-// ✅ IMPORTANT: Dynamic port for Render
+// ✅ IMPORTANT for Render (dynamic port)
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
