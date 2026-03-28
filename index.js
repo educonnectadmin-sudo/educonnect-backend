@@ -6,7 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ Root route (for browser test)
+// ✅ Test route
 app.get("/", (req, res) => {
   res.send("EduConnect Backend is Running ✅");
 });
@@ -15,17 +15,11 @@ app.get("/", (req, res) => {
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
 
-// ✅ Check if env variables exist
-if (!EMAIL_USER || !EMAIL_PASS) {
-  console.log("❌ Missing EMAIL_USER or EMAIL_PASS");
-}
-
-// ✅ Gmail transporter (IPv4 FIX)
+// ✅ FIXED transporter (IMPORTANT CHANGE)
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
-  secure: false,
-  family: 4, // 👈 IMPORTANT (fixes Render issue)
+  secure: false, // must be false for port 587
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASS
@@ -34,19 +28,17 @@ const transporter = nodemailer.createTransport({
 
 // ✅ Email API
 app.post("/send-email", async (req, res) => {
-  try {
-    const { to, name, status, fromDate, toDate } = req.body;
+  const { to, name, status, fromDate, toDate } = req.body;
 
-    // basic validation
-    if (!to) {
-      return res.status(400).send("Recipient email is required");
-    }
+  if (!to || !name || !status) {
+    return res.status(400).send("Missing required fields");
+  }
 
-    const mailOptions = {
-      from: EMAIL_USER,
-      to: to,
-      subject: "Leave Application Status",
-      text: `Hello ${name},
+  const mailOptions = {
+    from: EMAIL_USER,
+    to: to,
+    subject: "Leave Application Status",
+    text: `Hello ${name},
 
 Your leave request has been ${status}.
 
@@ -54,18 +46,18 @@ From: ${fromDate}
 To: ${toDate}
 
 Thank you.`
-    };
+  };
 
+  try {
     await transporter.sendMail(mailOptions);
-
     res.send("Email sent successfully ✅");
   } catch (error) {
-    console.error("❌ Email Error:", error);
-    res.status(500).send("Failed to send email");
+    console.error("MAIL ERROR:", error);
+    res.status(500).send(error.toString());
   }
 });
 
-// ✅ Dynamic port (Render requirement)
+// ✅ REQUIRED for Render
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
