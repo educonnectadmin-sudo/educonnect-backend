@@ -6,6 +6,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ✅ Use environment variables (secure way)
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+
 // Gmail transporter
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -15,29 +19,41 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Test route (optional but useful)
+app.get("/", (req, res) => {
+  res.send("EduConnect Backend is Running ✅");
+});
+
 // API to send email
 app.post("/send-email", async (req, res) => {
   const { to, name, status, fromDate, toDate } = req.body;
 
   const mailOptions = {
-    from: "educonnect.admin@gmail.com",
+    from: EMAIL_USER,
     to: to,
     subject: "Leave Application Status",
-    html: `
-      <h2>Hello ${name}</h2>
-      <p>Your leave request is <b>${status}</b></p>
-      <p>From: ${fromDate} To: ${toDate}</p>
-    `
+    text: `Hello ${name},
+
+Your leave request has been ${status}.
+
+From: ${fromDate}
+To: ${toDate}
+
+Thank you.`
   };
 
   try {
     await transporter.sendMail(mailOptions);
     res.send("Email sent successfully");
   } catch (error) {
+    console.log(error);
     res.status(500).send(error.toString());
   }
 });
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+// ✅ IMPORTANT: Dynamic port for Render
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
 });
