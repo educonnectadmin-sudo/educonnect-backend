@@ -1,4 +1,3 @@
-console.log("NEW VERSION DEPLOYED");
 const express = require("express");
 const nodemailer = require("nodemailer");
 const cors = require("cors");
@@ -16,11 +15,14 @@ app.get("/", (req, res) => {
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
 
-// ✅ FIXED transporter (IMPORTANT CHANGE)
+// ❗ Debug log (important)
+console.log("EMAIL_USER:", EMAIL_USER ? "Loaded" : "Missing");
+
+// ✅ FIXED transporter
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 587,
-  secure: false, // must be false for port 587
+  secure: false,
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASS
@@ -29,36 +31,34 @@ const transporter = nodemailer.createTransport({
 
 // ✅ Email API
 app.post("/send-email", async (req, res) => {
-  const { to, name, status, fromDate, toDate } = req.body;
+  try {
+    const { to, name, status, fromDate, toDate } = req.body;
 
-  if (!to || !name || !status) {
-    return res.status(400).send("Missing required fields");
-  }
+    if (!to || !name || !status) {
+      return res.status(400).send("Missing fields");
+    }
 
-  const mailOptions = {
-    from: EMAIL_USER,
-    to: to,
-    subject: "Leave Application Status",
-    text: `Hello ${name},
+    const mailOptions = {
+      from: EMAIL_USER,
+      to,
+      subject: "Leave Application Status",
+      text: `Hello ${name},
 
 Your leave request has been ${status}.
-
 From: ${fromDate}
-To: ${toDate}
+To: ${toDate}`
+    };
 
-Thank you.`
-  };
-
-  try {
     await transporter.sendMail(mailOptions);
-    res.send("Email sent successfully ✅");
+    res.send("Email sent ✅");
+
   } catch (error) {
-    console.error("MAIL ERROR:", error);
+    console.error("ERROR:", error);
     res.status(500).send(error.toString());
   }
 });
 
-// ✅ REQUIRED for Render
+// ✅ REQUIRED FOR RENDER
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
