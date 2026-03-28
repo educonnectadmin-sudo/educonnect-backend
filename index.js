@@ -17,7 +17,10 @@ const EMAIL_PASS = process.env.EMAIL_PASS;
 
 // ✅ Gmail transporter
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  family: 4, // 👈 FORCE IPv4 (IMPORTANT)
   auth: {
     user: EMAIL_USER,
     pass: EMAIL_PASS
