@@ -6,15 +6,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ SAFE CHECK (prevents crash)
-const API_KEY = process.env.SENDGRID_API_KEY;
-const EMAIL = process.env.EMAIL_USER;
-
-if (!API_KEY || !EMAIL) {
-  console.error("❌ Missing ENV variables");
-} else {
-  sgMail.setApiKey(API_KEY);
-}
+// ✅ Set SendGrid API key
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 // ✅ Test route
 app.get("/", (req, res) => {
@@ -30,33 +23,79 @@ app.post("/send-email", async (req, res) => {
       return res.status(400).send("Recipient email is required");
     }
 
-    if (!API_KEY || !EMAIL) {
-      return res.status(500).send("Server config error ❌");
-    }
+    const statusColor = status === "APPROVED" ? "#28a745" : "#dc3545";
 
     const msg = {
       to: to,
-      from: EMAIL,
+      from: process.env.EMAIL_USER,
       subject: "Leave Application Status",
 
       html: `
-      <div style="font-family: Arial; padding:40px;">
-        <div style="position:relative; max-width:600px; margin:auto; padding:30px;">
+      <div style="
+        background-color:#f4f6f8;
+        padding:20px;
+        font-family:Arial, sans-serif;
+      ">
+        
+        <div style="
+          max-width:600px;
+          margin:auto;
+          background:white;
+          border-radius:10px;
+          padding:30px;
+          box-shadow:0 2px 8px rgba(0,0,0,0.1);
+          background-image: url('https://res.cloudinary.com/dcurr0wjz/image/upload/v1774714989/Gemini_Generated_Image_oig6yzoig6yzoig6_h73pna.png'); /* 🔥 replace with your logo link */
+          background-repeat: no-repeat;
+          background-position: center;
+          background-size: 200px;
+        ">
+          
+          <!-- overlay for light effect -->
+          <div style="background: rgba(255,255,255,0.9); padding:20px; border-radius:10px;">
+            
+            <div style="text-align:center; margin-bottom:20px;">
+              <h2 style="color:#4a6cf7; margin:0;">EduConnect</h2>
+            </div>
 
-          <!-- LOGO -->
-          <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); opacity:0.12;">
-            <img src="https://res.cloudinary.com/dcurr0wjz/image/upload/v1774714989/Gemini_Generated_Image_oig6yzoig6yzoig6_h73pna.png" width="350"/>
+            <p>Hi <b>${name}</b>,</p>
+
+            <p>
+              The HOD has formally deliberated upon your petition for 
+              <b>Sick Leave</b> and issued the following decree:
+            </p>
+
+            <p>
+              <b>Status:</b> 
+              <span style="color:${statusColor}; font-weight:bold;">
+                ${status}
+              </span>
+            </p>
+
+            <p>
+              <b>Temporal Range:</b> ${fromDate} to ${toDate}
+            </p>
+
+            <p>
+              <b>Official Commentary:</b><br/>
+              "Your leave application has been ${status.toLowerCase()}."
+            </p>
+
+            <p style="font-style:italic; color:#666;">
+              This is an automated message from EduConnect.
+            </p>
+
+            <hr style="margin:20px 0;"/>
+
+            <p>
+              Regards,<br/>
+              <b>EduConnect Team</b>
+            </p>
+
           </div>
-
-          <div style="position:relative; z-index:2;">
-            <h2>Hi ${name},</h2>
-            <p>Status: <b>${status}</b></p>
-            <p>${fromDate} → ${toDate}</p>
-          </div>
-
         </div>
+
       </div>
-      `
+      `,
     };
 
     await sgMail.send(msg);
@@ -64,7 +103,7 @@ app.post("/send-email", async (req, res) => {
     res.send("Email sent successfully ✅");
 
   } catch (error) {
-    console.error("❌ ERROR:", error.response?.body || error.message);
+    console.error(error.response?.body || error.message);
     res.status(500).send("Email failed ❌");
   }
 });
