@@ -6,16 +6,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ✅ Set SendGrid API Key
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// Test
+// ✅ Test route
 app.get("/", (req, res) => {
   res.send("EduConnect Backend Running ✅");
 });
 
 
 // =====================================
-// ✅ SINGLE EMAIL API
+// ✅ SINGLE EMAIL API (FINAL)
 // =====================================
 app.post("/send-email", async (req, res) => {
   try {
@@ -30,7 +31,14 @@ app.post("/send-email", async (req, res) => {
       adminReply
     } = req.body;
 
-    if (!to) return res.status(400).send("Email required");
+    // ✅ validations
+    if (!to) {
+      return res.status(400).send("Email required");
+    }
+
+    if (!type) {
+      return res.status(400).send("Type is required (leave or reply)");
+    }
 
     let htmlContent = "";
 
@@ -62,6 +70,7 @@ app.post("/send-email", async (req, res) => {
       </div>
 
       <p style="color:#666;">This is an automated notification.</p>
+
       <p>Regards,<br/><b>EduConnect Team</b></p>
       `;
     }
@@ -100,8 +109,13 @@ app.post("/send-email", async (req, res) => {
       `;
     }
 
+    // ✅ fallback (prevents empty email)
+    if (!htmlContent) {
+      htmlContent = `<p>Invalid email type provided.</p>`;
+    }
+
     // ===============================
-    // ✅ COMMON LAYOUT
+    // ✅ COMMON EMAIL UI
     // ===============================
     const finalHTML = `
     <div style="background:#f4f6f9;padding:30px;font-family:Arial;">
@@ -131,22 +145,29 @@ app.post("/send-email", async (req, res) => {
     </div>
     `;
 
+    // ===============================
+    // ✅ SEND EMAIL
+    // ===============================
     await sgMail.send({
       to,
-      from: process.env.EMAIL_USER,
-      subject: type === "leave" ? "Leave Status" : "Admin Reply",
+      from: process.env.EMAIL_USER, // MUST be verified in SendGrid
+      subject: type === "leave"
+        ? `Leave ${status}`
+        : "Admin Reply from EduConnect",
       html: finalHTML
     });
 
-    res.send("Email sent ✅");
+    res.send("Email sent successfully ✅");
 
   } catch (err) {
-    console.error(err.response?.body || err.message);
+    console.error("❌ ERROR:", err.response?.body || err.message);
     res.status(500).send("Email failed ❌");
   }
 });
 
 
+// =====================================
+// ✅ SERVER
 // =====================================
 const PORT = process.env.PORT || 3000;
 
