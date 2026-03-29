@@ -21,14 +21,16 @@ app.get("/", (req, res) => {
 app.post("/send-email", async (req, res) => {
   try {
     const {
-      type,        // "leave" OR "reply"
+      type,        // "leave" OR "reply" OR "account"
       to,
       name,
       status,
       fromDate,
       toDate,
       userMessage,
-      adminReply
+      adminReply,
+      username,
+      password
     } = req.body;
 
     // ✅ validations
@@ -37,7 +39,7 @@ app.post("/send-email", async (req, res) => {
     }
 
     if (!type) {
-      return res.status(400).send("Type is required (leave or reply)");
+      return res.status(400).send("Type is required (leave, reply, account)");
     }
 
     let htmlContent = "";
@@ -109,7 +111,34 @@ app.post("/send-email", async (req, res) => {
       `;
     }
 
-    // ✅ fallback (prevents empty email)
+    // ===============================
+    // ✅ NEW: ACCOUNT CREATION EMAIL
+    // ===============================
+    else if (type === "account") {
+
+      htmlContent = `
+      <p>Hi <b>${name}</b>,</p>
+
+      <p>Your account has been created successfully on EduConnect.</p>
+
+      <div style="
+        background:#f1f3f5;
+        padding:12px;
+        border-left:4px solid #4a6cf7;
+        margin:15px 0;
+      ">
+        <b>Registration Details:</b><br/><br/>
+        Username (Email): ${username} <br/>
+        Password: ${password}
+      </div>
+
+      <p>Please login using these credentials.</p>
+
+      <p>Regards,<br/><b>EduConnect Team</b></p>
+      `;
+    }
+
+    // ✅ fallback
     if (!htmlContent) {
       htmlContent = `<p>Invalid email type provided.</p>`;
     }
@@ -150,10 +179,13 @@ app.post("/send-email", async (req, res) => {
     // ===============================
     await sgMail.send({
       to,
-      from: process.env.EMAIL_USER, // MUST be verified in SendGrid
-      subject: type === "leave"
-        ? `Leave ${status}`
-        : "Admin Reply from EduConnect",
+      from: process.env.EMAIL_USER,
+      subject:
+        type === "leave"
+          ? `Leave ${status}`
+          : type === "reply"
+          ? "Admin Reply from EduConnect"
+          : "Your EduConnect Account Created",
       html: finalHTML
     });
 
