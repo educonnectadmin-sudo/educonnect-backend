@@ -112,7 +112,7 @@ app.post("/send-email", async (req, res) => {
     }
 
     // ===============================
-    // ✅ NEW: ACCOUNT CREATION EMAIL
+    // ✅ ACCOUNT CREATION EMAIL
     // ===============================
     else if (type === "account") {
 
@@ -144,29 +144,48 @@ app.post("/send-email", async (req, res) => {
     }
 
     // ===============================
-    // ✅ COMMON EMAIL UI
+    // ✅ COMMON EMAIL UI (UPDATED BACKGROUND)
     // ===============================
     const finalHTML = `
-    <div style="background:#f4f6f9;padding:30px;font-family:Arial;">
+    <div style="
+      background:#f4f6f9;
+      padding:30px;
+      font-family:Arial;
 
+      /* 🔥 FULL BACKGROUND LOGO */
+      background-image:url('https://res.cloudinary.com/dcurr0wjz/image/upload/v1774718035/Gemini_Generated_Image_oig6yzoig6yzoig6_qkdwvg.png');
+      background-repeat:no-repeat;
+      background-position:center;
+      background-size:500px;
+    ">
+
+      <!-- 🔥 LIGHT OVERLAY -->
       <div style="
-        max-width:600px;
-        margin:auto;
-        background:white;
+        background:rgba(255,255,255,0.92);
+        padding:20px;
         border-radius:12px;
-        box-shadow:0 5px 20px rgba(0,0,0,0.1);
-        overflow:hidden;
       ">
 
-        <!-- HEADER -->
-        <div style="text-align:center;padding:20px;border-bottom:1px solid #eee;">
-          <img src="https://res.cloudinary.com/dcurr0wjz/image/upload/v1774718035/Gemini_Generated_Image_oig6yzoig6yzoig6_qkdwvg.png" width="60"/>
-          <h2 style="color:#4a6cf7;margin-top:10px;">EduConnect</h2>
-        </div>
+        <div style="
+          max-width:600px;
+          margin:auto;
+          background:white;
+          border-radius:12px;
+          box-shadow:0 5px 20px rgba(0,0,0,0.1);
+          overflow:hidden;
+        ">
 
-        <!-- BODY -->
-        <div style="padding:25px;">
-          ${htmlContent}
+          <!-- HEADER -->
+          <div style="text-align:center;padding:20px;border-bottom:1px solid #eee;">
+            <img src="https://res.cloudinary.com/dcurr0wjz/image/upload/v1774718035/Gemini_Generated_Image_oig6yzoig6yzoig6_qkdwvg.png" width="60"/>
+            <h2 style="color:#4a6cf7;margin-top:10px;">EduConnect</h2>
+          </div>
+
+          <!-- BODY -->
+          <div style="padding:25px;">
+            ${htmlContent}
+          </div>
+
         </div>
 
       </div>
