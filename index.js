@@ -6,169 +6,143 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ SendGrid API
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// ✅ Test route
+// Test
 app.get("/", (req, res) => {
-  res.send("EduConnect Backend is Running ✅");
+  res.send("EduConnect Backend Running ✅");
 });
 
 
 // =====================================
-// ✅ COMMON EMAIL TEMPLATE FUNCTION
-// =====================================
-function emailLayout(content) {
-  return `
-  <div style="background:#f4f6f9;padding:30px;font-family:'Segoe UI',Arial;">
-    
-    <div style="
-      max-width:650px;
-      margin:auto;
-      background:white;
-      border-radius:14px;
-      overflow:hidden;
-      box-shadow:0 8px 25px rgba(0,0,0,0.1);
-    ">
-
-      <!-- HEADER WITH LOGO -->
-      <div style="text-align:center;padding:25px;border-bottom:1px solid #eee;">
-        <img src="https://res.cloudinary.com/dcurr0wjz/image/upload/v1774718035/Gemini_Generated_Image_oig6yzoig6yzoig6_qkdwvg.png" width="80"/>
-        <h2 style="margin:10px 0 0;color:#4a6cf7;">EduConnect</h2>
-      </div>
-
-      <!-- BODY -->
-      <div style="padding:30px;">
-        ${content}
-      </div>
-
-      <!-- FOOTER -->
-      <div style="text-align:center;padding:15px;background:#f9fafc;font-size:12px;color:#777;">
-        © EduConnect • Smart Academic Management
-      </div>
-
-    </div>
-
-  </div>
-  `;
-}
-
-
-// =====================================
-// ✅ 1. LEAVE APPLICATION EMAIL
+// ✅ SINGLE EMAIL API
 // =====================================
 app.post("/send-email", async (req, res) => {
   try {
-    const { to, name, status, fromDate, toDate } = req.body;
+    const {
+      type,        // "leave" OR "reply"
+      to,
+      name,
+      status,
+      fromDate,
+      toDate,
+      userMessage,
+      adminReply
+    } = req.body;
 
-    if (!to) return res.status(400).send("Recipient email is required");
+    if (!to) return res.status(400).send("Email required");
 
-    const statusColor = status === "APPROVED" ? "#28a745" : "#dc3545";
+    let htmlContent = "";
 
-    const content = `
+    // ===============================
+    // ✅ LEAVE EMAIL
+    // ===============================
+    if (type === "leave") {
+
+      htmlContent = `
       <p>Hi <b>${name}</b>,</p>
 
       <p>Your leave application has been reviewed.</p>
 
-      <!-- STATUS BUTTON -->
-      <div style="text-align:center;margin:25px 0;">
+      <div style="text-align:center;margin:20px 0;">
         <span style="
-          padding:12px 30px;
-          border-radius:25px;
-          font-weight:bold;
+          padding:10px 25px;
+          border-radius:20px;
           color:white;
-          background:${statusColor};
+          font-weight:bold;
+          background:${status === "APPROVED" ? "#28a745" : "#dc3545"};
         ">
           ${status}
         </span>
       </div>
 
-      <!-- DETAILS -->
-      <div style="background:#f1f3f5;padding:15px;border-radius:8px;">
+      <div style="background:#f1f3f5;padding:10px;border-radius:6px;">
         <p><b>From:</b> ${fromDate}</p>
         <p><b>To:</b> ${toDate}</p>
       </div>
 
-      <p style="margin-top:20px;color:#666;">
-        This is an automated notification.
-      </p>
-
+      <p style="color:#666;">This is an automated notification.</p>
       <p>Regards,<br/><b>EduConnect Team</b></p>
-    `;
+      `;
+    }
 
-    await sgMail.send({
-      to,
-      from: process.env.EMAIL_USER,
-      subject: "Leave Application Status",
-      html: emailLayout(content),
-    });
+    // ===============================
+    // ✅ ADMIN REPLY EMAIL
+    // ===============================
+    else if (type === "reply") {
 
-    res.send("Leave email sent ✅");
-
-  } catch (err) {
-    console.error(err.response?.body || err.message);
-    res.status(500).send("Email failed ❌");
-  }
-});
-
-
-// =====================================
-// ✅ 2. ADMIN REPLY EMAIL
-// =====================================
-app.post("/admin-reply", async (req, res) => {
-  try {
-    const { userEmail, userMessage, adminReply, name } = req.body;
-
-    if (!userEmail) return res.status(400).send("User email required");
-
-    const content = `
+      htmlContent = `
       <p>Hi <b>${name}</b>,</p>
 
-      <p>Admin has responded to your query.</p>
+      <p>Admin has replied to your message.</p>
 
-      <!-- USER MESSAGE -->
       <div style="
         background:#f1f3f5;
-        padding:15px;
+        padding:12px;
         border-left:4px solid #4a6cf7;
-        border-radius:6px;
         margin:15px 0;
       ">
-        <b>Your Message:</b><br/>
+        <b>Original Message:</b><br/>
         ${userMessage}
       </div>
 
-      <!-- ADMIN REPLY -->
       <div style="
         background:#e6f4ea;
-        padding:15px;
+        padding:12px;
         border-left:4px solid #28a745;
-        border-radius:6px;
         margin:15px 0;
       ">
         <b>Admin Reply:</b><br/>
         ${adminReply}
       </div>
 
-      <p style="color:#666;">
-        Feel free to reach out again if needed.
-      </p>
-
       <p>Regards,<br/><b>EduConnect Team</b></p>
+      `;
+    }
+
+    // ===============================
+    // ✅ COMMON LAYOUT
+    // ===============================
+    const finalHTML = `
+    <div style="background:#f4f6f9;padding:30px;font-family:Arial;">
+
+      <div style="
+        max-width:600px;
+        margin:auto;
+        background:white;
+        border-radius:12px;
+        box-shadow:0 5px 20px rgba(0,0,0,0.1);
+        overflow:hidden;
+      ">
+
+        <!-- HEADER -->
+        <div style="text-align:center;padding:20px;border-bottom:1px solid #eee;">
+          <img src="https://res.cloudinary.com/dcurr0wjz/image/upload/v1774718035/Gemini_Generated_Image_oig6yzoig6yzoig6_qkdwvg.png" width="60"/>
+          <h2 style="color:#4a6cf7;margin-top:10px;">EduConnect</h2>
+        </div>
+
+        <!-- BODY -->
+        <div style="padding:25px;">
+          ${htmlContent}
+        </div>
+
+      </div>
+
+    </div>
     `;
 
     await sgMail.send({
-      to: userEmail,
+      to,
       from: process.env.EMAIL_USER,
-      subject: "EduConnect - Admin Reply",
-      html: emailLayout(content),
+      subject: type === "leave" ? "Leave Status" : "Admin Reply",
+      html: finalHTML
     });
 
-    res.send("Reply sent ✅");
+    res.send("Email sent ✅");
 
   } catch (err) {
     console.error(err.response?.body || err.message);
-    res.status(500).send("Reply failed ❌");
+    res.status(500).send("Email failed ❌");
   }
 });
 
