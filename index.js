@@ -177,7 +177,7 @@ app.post("/send-email", async (req, res) => {
 
           <!-- HEADER -->
           <div style="text-align:center;padding:20px;border-bottom:1px solid #eee;">
-            <img src="https://res.cloudinary.com/dcurr0wjz/image/upload/v1774718035/Gemini_Generated_Image_oig6yzoig6yzoig6_qkdwvg.png" width="60"/>
+            <img src="https://res.cloudinary.com/dcurr0wjz/image/upload/v1774718035/Gemini_Generated_Image_oig6yzoig6yzoig6_qkdwvg.png" width="100"/>
             <h2 style="color:#4a6cf7;margin-top:10px;">EduConnect</h2>
           </div>
 
